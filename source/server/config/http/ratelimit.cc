@@ -5,6 +5,8 @@
 
 #include "common/http/filter/ratelimit.h"
 
+#include "server/config/network/http_connection_manager.h"
+
 namespace Envoy {
 namespace Server {
 namespace Configuration {
@@ -12,17 +14,17 @@ namespace Configuration {
 HttpFilterFactoryCb RateLimitFilterConfig::createFilterFactory(HttpFilterType type,
                                                                const Json::Object& config,
                                                                const std::string&,
-                                                               Server::Instance& server) {
+                                                               FactoryContext& context) {
   if (type != HttpFilterType::Decoder) {
     throw EnvoyException(
         fmt::format("{} http filter must be configured as a decoder filter.", name()));
   }
 
   Http::RateLimit::FilterConfigSharedPtr filter_config(new Http::RateLimit::FilterConfig(
-      config, server.localInfo(), server.stats(), server.runtime(), server.clusterManager()));
-  return [filter_config, &server](Http::FilterChainFactoryCallbacks& callbacks) -> void {
+      config, context.localInfo(), context.stats(), context.runtime(), context.clusterManager()));
+  return [filter_config, &context](Http::FilterChainFactoryCallbacks& callbacks) -> void {
     callbacks.addStreamDecoderFilter(Http::StreamDecoderFilterSharedPtr{new Http::RateLimit::Filter(
-        filter_config, server.rateLimitClient(std::chrono::milliseconds(20)))});
+        filter_config, context.rateLimitClient(std::chrono::milliseconds(20)))});
   };
 }
 

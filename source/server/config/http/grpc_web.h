@@ -1,6 +1,6 @@
 #pragma once
 
-#include "server/config/network/http_connection_manager.h"
+#include "envoy/server/filter_config.h"
 
 namespace Envoy {
 namespace Server {
@@ -9,7 +9,7 @@ namespace Configuration {
 class GrpcWebFilterConfig : public NamedHttpFilterConfigFactory {
 public:
   HttpFilterFactoryCb createFilterFactory(HttpFilterType type, const Json::Object&,
-                                          const std::string&, Server::Instance&) override;
+                                          const std::string&, FactoryContext&) override;
 
   std::string name() override;
 };

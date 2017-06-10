@@ -3,9 +3,10 @@
 #include <string>
 
 #include "envoy/network/connection.h"
-#include "envoy/server/instance.h"
 
 #include "common/filter/tcp_proxy.h"
+
+#include "server/configuration_impl.h"
 
 namespace Envoy {
 namespace Server {
@@ -13,17 +14,17 @@ namespace Configuration {
 
 NetworkFilterFactoryCb TcpProxyConfigFactory::createFilterFactory(NetworkFilterType type,
                                                                   const Json::Object& config,
-                                                                  Server::Instance& server) {
+                                                                  FactoryContext& context) {
   if (type != NetworkFilterType::Read) {
     throw EnvoyException(
         fmt::format("{} network filter must be configured as a read filter.", name()));
   }
 
   Filter::TcpProxyConfigSharedPtr filter_config(
-      new Filter::TcpProxyConfig(config, server.clusterManager(), server.stats()));
-  return [filter_config, &server](Network::FilterManager& filter_manager) -> void {
-    filter_manager.addReadFilter(
-        Network::ReadFilterSharedPtr{new Filter::TcpProxy(filter_config, server.clusterManager())});
+      new Filter::TcpProxyConfig(config, context.clusterManager(), context.stats()));
+  return [filter_config, &context](Network::FilterManager& filter_manager) -> void {
+    filter_manager.addReadFilter(Network::ReadFilterSharedPtr{
+        new Filter::TcpProxy(filter_config, context.clusterManager())});
   };
 }
 

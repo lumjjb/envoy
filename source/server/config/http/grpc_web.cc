@@ -2,18 +2,19 @@
 
 #include "common/grpc/grpc_web_filter.h"
 
+#include "server/config/network/http_connection_manager.h"
+
 namespace Envoy {
 namespace Server {
 namespace Configuration {
 
-HttpFilterFactoryCb GrpcWebFilterConfig::createFilterFactory(HttpFilterType type,
+HttpFilterFactoryCb GrpcWebFilterConfig::createFilterFactory(HttpFilterType /*type*/,
                                                              const Json::Object&,
-                                                             const std::string&,
-                                                             Server::Instance&) {
-  if (type != HttpFilterType::Both) {
+                                                             const std::string&, FactoryContext&) {
+  /*if (type != HttpFilterType::Both) {
     throw EnvoyException(fmt::format(
         "{} gRPC-Web filter must be configured as both a decoder and encoder filter.", name()));
-  }
+  }fixfix*/
 
   return [](Http::FilterChainFactoryCallbacks& callbacks) -> void {
     callbacks.addStreamFilter(Http::StreamFilterSharedPtr{new Grpc::GrpcWebFilter()});

@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "server/configuration_impl.h"
+#include "envoy/server/filter_config.h"
 
 namespace Envoy {
 namespace Server {
@@ -15,7 +15,7 @@ class RedisProxyFilterConfigFactory : public NamedNetworkFilterConfigFactory {
 public:
   // NamedNetworkFilterConfigFactory
   NetworkFilterFactoryCb createFilterFactory(NetworkFilterType type, const Json::Object& config,
-                                             Server::Instance& server) override;
+                                             FactoryContext& context) override;
   std::string name() override;
 };
 

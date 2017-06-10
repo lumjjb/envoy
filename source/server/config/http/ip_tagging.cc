@@ -5,6 +5,8 @@
 #include "common/http/filter/ip_tagging_filter.h"
 #include "common/json/config_schemas.h"
 
+#include "server/config/network/http_connection_manager.h"
+
 namespace Envoy {
 namespace Server {
 namespace Configuration {
@@ -12,7 +14,7 @@ namespace Configuration {
 HttpFilterFactoryCb IpTaggingFilterConfig::createFilterFactory(HttpFilterType type,
                                                                const Json::Object& json_config,
                                                                const std::string&,
-                                                               Server::Instance&) {
+                                                               FactoryContext&) {
   if (type != HttpFilterType::Decoder) {
     throw EnvoyException(
         fmt::format("{} ip tagging filter must be configured as a decoder filter.", name()));

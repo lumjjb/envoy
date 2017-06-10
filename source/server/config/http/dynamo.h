@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "server/config/network/http_connection_manager.h"
+#include "envoy/server/filter_config.h"
 
 namespace Envoy {
 namespace Server {
@@ -15,7 +15,7 @@ class DynamoFilterConfig : public NamedHttpFilterConfigFactory {
 public:
   HttpFilterFactoryCb createFilterFactory(HttpFilterType type, const Json::Object&,
                                           const std::string& stat_prefix,
-                                          Server::Instance& server) override;
+                                          FactoryContext& context) override;
   std::string name() override;
 };
 

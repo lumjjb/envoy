@@ -6,7 +6,6 @@
 #include "envoy/event/dispatcher.h"
 #include "envoy/event/timer.h"
 #include "envoy/http/header_map.h"
-#include "envoy/server/instance.h"
 
 #include "common/common/assert.h"
 #include "common/common/enum_to_int.h"
@@ -16,6 +15,8 @@
 #include "common/http/utility.h"
 #include "common/json/config_schemas.h"
 #include "common/json/json_loader.h"
+
+#include "server/config/network/http_connection_manager.h"
 
 namespace Envoy {
 namespace Server {
@@ -27,7 +28,7 @@ namespace Configuration {
 HttpFilterFactoryCb HealthCheckFilterConfig::createFilterFactory(HttpFilterType type,
                                                                  const Json::Object& config,
                                                                  const std::string&,
-                                                                 Server::Instance& server) {
+                                                                 FactoryContext& context) {
   if (type != HttpFilterType::Both) {
     throw EnvoyException(fmt::format(
         "{} network filter must be configured as both a read and write filter.", name()));
@@ -45,14 +46,14 @@ HttpFilterFactoryCb HealthCheckFilterConfig::createFilterFactory(HttpFilterType 
 
   HealthCheckCacheManagerSharedPtr cache_manager;
   if (cache_time_ms > 0) {
-    cache_manager.reset(
-        new HealthCheckCacheManager(server.dispatcher(), std::chrono::milliseconds(cache_time_ms)));
+    cache_manager.reset(new HealthCheckCacheManager(context.dispatcher(),
+                                                    std::chrono::milliseconds(cache_time_ms)));
   }
 
-  return [&server, pass_through_mode, cache_manager, hc_endpoint](
+  return [&context, pass_through_mode, cache_manager, hc_endpoint](
              Http::FilterChainFactoryCallbacks& callbacks) -> void {
     callbacks.addStreamFilter(Http::StreamFilterSharedPtr{
-        new HealthCheckFilter(server, pass_through_mode, cache_manager, hc_endpoint)});
+        new HealthCheckFilter(context, pass_through_mode, cache_manager, hc_endpoint)});
   };
 }
 
@@ -86,7 +87,7 @@ Http::FilterHeadersStatus HealthCheckFilter::decodeHeaders(Http::HeaderMap& head
 
     // If we are not in pass through mode, we always handle. Otherwise, we handle if the server is
     // in the failed state or if we are using caching and we should use the cached response.
-    if (!pass_through_mode_ || server_.healthCheckFailed() ||
+    if (!pass_through_mode_ || context_.healthCheckFailed() ||
         (cache_manager_ && cache_manager_->useCachedResponseCode())) {
       handling_ = true;
     }
@@ -124,7 +125,7 @@ Http::FilterHeadersStatus HealthCheckFilter::encodeHeaders(Http::HeaderMap& head
           static_cast<Http::Code>(Http::Utility::getResponseStatus(headers)));
     }
 
-    headers.insertEnvoyUpstreamHealthCheckedCluster().value(server_.localInfo().clusterName());
+    headers.insertEnvoyUpstreamHealthCheckedCluster().value(context_.localInfo().clusterName());
   }
 
   return Http::FilterHeadersStatus::Continue;
@@ -133,7 +134,7 @@ Http::FilterHeadersStatus HealthCheckFilter::encodeHeaders(Http::HeaderMap& head
 void HealthCheckFilter::onComplete() {
   ASSERT(handling_);
   Http::HeaderMapPtr headers;
-  if (server_.healthCheckFailed()) {
+  if (context_.healthCheckFailed()) {
     callbacks_->requestInfo().setResponseFlag(
         Http::AccessLog::ResponseFlag::FailedLocalHealthCheck);
     headers.reset(new Http::HeaderMapImpl{

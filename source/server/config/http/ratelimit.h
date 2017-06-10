@@ -2,9 +2,7 @@
 
 #include <string>
 
-#include "envoy/server/instance.h"
-
-#include "server/config/network/http_connection_manager.h"
+#include "envoy/server/filter_config.h"
 
 namespace Envoy {
 namespace Server {
@@ -16,7 +14,7 @@ namespace Configuration {
 class RateLimitFilterConfig : public NamedHttpFilterConfigFactory {
 public:
   HttpFilterFactoryCb createFilterFactory(HttpFilterType type, const Json::Object& config,
-                                          const std::string&, Server::Instance& server) override;
+                                          const std::string&, FactoryContext& context) override;
   std::string name() override;
 };
 

@@ -4,6 +4,8 @@
 
 #include "common/dynamo/dynamo_filter.h"
 
+#include "server/config/network/http_connection_manager.h"
+
 namespace Envoy {
 namespace Server {
 namespace Configuration {
@@ -11,15 +13,15 @@ namespace Configuration {
 HttpFilterFactoryCb DynamoFilterConfig::createFilterFactory(HttpFilterType type,
                                                             const Json::Object&,
                                                             const std::string& stat_prefix,
-                                                            Server::Instance& server) {
+                                                            FactoryContext& context) {
   if (type != HttpFilterType::Both) {
     throw EnvoyException(fmt::format(
         "{} http filter must be configured as both a decoder and encoder filter.", name()));
   }
 
-  return [&server, stat_prefix](Http::FilterChainFactoryCallbacks& callbacks) -> void {
+  return [&context, stat_prefix](Http::FilterChainFactoryCallbacks& callbacks) -> void {
     callbacks.addStreamFilter(Http::StreamFilterSharedPtr{
-        new Dynamo::DynamoFilter(server.runtime(), stat_prefix, server.stats())});
+        new Dynamo::DynamoFilter(context.runtime(), stat_prefix, context.stats())});
   };
 }
 

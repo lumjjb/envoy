@@ -1,7 +1,5 @@
 #include <string>
 
-#include "envoy/network/connection.h"
-
 #include "common/filter/echo.h"
 
 #include "server/configuration_impl.h"
@@ -17,7 +15,7 @@ class EchoConfigFactory : public NamedNetworkFilterConfigFactory {
 public:
   // NamedNetworkFilterConfigFactory
   NetworkFilterFactoryCb createFilterFactory(NetworkFilterType type, const Json::Object&,
-                                             Server::Instance&) override {
+                                             FactoryContext&) override {
     if (type != NetworkFilterType::Read) {
       throw EnvoyException(
           fmt::format("{} network filter must be configured as a read filter.", name()));
